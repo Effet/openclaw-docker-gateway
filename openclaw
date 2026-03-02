@@ -15,5 +15,5 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 if docker inspect openclaw-gateway --format='{{.State.Status}}' 2>/dev/null | grep -q running; then
   exec docker exec -it openclaw-gateway openclaw "$@"
 else
-  exec docker compose -f "$SCRIPT_DIR/docker-compose.yml" run --rm openclaw "$@"
+  exec docker compose -f "$SCRIPT_DIR/docker-compose.yml" run --rm --entrypoint openclaw openclaw "$@"
 fi
