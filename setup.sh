@@ -20,14 +20,14 @@ info "Docker $(docker --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')"
 
 # ── Directories ───────────────────────────────────────────────────────────────
 heading "Preparing directories..."
-mkdir -p openclaw-config toolchain
-info "openclaw-config/  (gateway config & state)"
-info "toolchain/        (npm global prefix — persists across restarts)"
+mkdir -p openclaw-config openclaw-workspace toolchain
+info "openclaw-config/    (gateway config & state)"
+info "openclaw-workspace/ (agent workspace)"
+info "toolchain/          (npm global prefix — persists across restarts)"
 
 # ── Start ─────────────────────────────────────────────────────────────────────
 heading "Starting container..."
-docker compose pull --quiet 2>/dev/null || true
-docker compose up -d
+docker compose up -d --build
 
 info "Waiting for gateway to become healthy..."
 info "First run installs openclaw via npm (~2 min). Subsequent starts are fast."
