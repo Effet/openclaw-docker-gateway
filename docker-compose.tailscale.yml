@@ -13,7 +13,7 @@ services:
 
   openclaw:
     network_mode: service:tailscale
-    ports: []
+    ports: !reset []
 
 volumes:
   tailscale-state:
