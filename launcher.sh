@@ -21,19 +21,33 @@ echo "[launcher] OpenClaw $("$GCLAW" --version 2>/dev/null)"
 
 # If HTTPS_PROXY is set, route openclaw through proxychains4.
 # Node.js native fetch (undici) does not respect HTTPS_PROXY natively.
+# Supported formats:
+#   http://host:port
+#   socks5://host:port
+#   http://user:pass@host:port
 PROXY="${HTTPS_PROXY:-${https_proxy:-}}"
 if [ -n "$PROXY" ]; then
-    hp="${PROXY#*://}"   # strip scheme
-    hp="${hp%%/*}"       # strip trailing path
-    PHOST="${hp%:*}"
-    PPORT="${hp##*:}"
+    SCHEME="${PROXY%%://*}"
+    rest="${PROXY#*://}"
+    # Extract optional user:pass
+    if echo "$rest" | grep -q '@'; then
+        auth="${rest%@*}"; rest="${rest#*@}"
+        PUSER="${auth%:*}"; PPASS="${auth#*:}"
+    else
+        PUSER=""; PPASS=""
+    fi
+    hp="${rest%%/*}"
+    PHOST="${hp%:*}"; PPORT="${hp##*:}"
+    # proxychains uses 'http' for HTTP CONNECT proxies (including https://)
+    [ "$SCHEME" = "https" ] && SCHEME="http"
+    PROXY_LINE="${SCHEME} ${PHOST} ${PPORT}${PUSER:+ ${PUSER} ${PPASS}}"
     cat > /tmp/proxychains.conf << CONF
 strict_chain
 proxy_dns
 [ProxyList]
-http ${PHOST} ${PPORT}
+${PROXY_LINE}
 CONF
-    echo "[launcher] proxychains4 via ${PHOST}:${PPORT}"
+    echo "[launcher] proxychains4 via ${SCHEME}://${PHOST}:${PPORT}"
     exec proxychains4 -f /tmp/proxychains.conf -q "$GCLAW" "$@"
 fi
 
