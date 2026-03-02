@@ -14,10 +14,10 @@ GREEN='\033[0;32m'; NC='\033[0m'
 ok() { echo -e "${GREEN}[✓]${NC} $*"; }
 
 # ── 1. openclaw-config snapshot ────────────────────────────────────────────
-BACKUP_DIR="backups/openclaw-config-${TIMESTAMP}"
-mkdir -p "$BACKUP_DIR"
-rsync -a openclaw-config/ "$BACKUP_DIR/"
-ok "Config snapshot → $BACKUP_DIR"
+mkdir -p backups
+BACKUP_FILE="backups/openclaw-config-${TIMESTAMP}.tar.gz"
+tar -czf "$BACKUP_FILE" --exclude='openclaw-config/logs' openclaw-config/
+ok "Config snapshot → $BACKUP_FILE"
 
 # ── 2. openclaw-workspace git ──────────────────────────────────────────────
 cd openclaw-workspace

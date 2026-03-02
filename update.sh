@@ -1,10 +1,6 @@
 #!/usr/bin/env bash
 # update.sh — Hot-swap OpenClaw to a new version without rebuilding the image.
 #
-# Usage:
-#   ./update.sh              # install latest openclaw
-#   ./update.sh 2026.2.26    # install a specific version
-#
 # How it works:
 #   Runs 'npm install -g openclaw@VERSION' inside the running container,
 #   writing the package into the persisted ./toolchain volume.
@@ -25,18 +21,36 @@ warn()    { echo -e "${YELLOW}[!]${NC} $*"; }
 error()   { echo -e "${RED}[✗]${NC} $*" >&2; }
 heading() { echo -e "\n${BOLD}$*${NC}"; }
 
-VERSION="${1:-latest}"
+# ── Mode & version ────────────────────────────────────────────────────────────
+MODE="${1:-}"
+case "$MODE" in
+  ports)
+    COMPOSE_FILES="-f docker-compose.yml"
+    ;;
+  tailscale)
+    COMPOSE_FILES="-f docker-compose.yml -f docker-compose.tailscale.yml"
+    ;;
+  *)
+    echo -e "${BOLD}Usage:${NC} ./update.sh <mode> [version]"
+    echo ""
+    echo "  ports       [version]   Update in ports mode"
+    echo "  tailscale   [version]   Update in Tailscale mode"
+    echo ""
+    echo "  version defaults to 'latest' if not specified."
+    echo ""
+    exit 0
+    ;;
+esac
 
-COMPOSE_FILES="-f docker-compose.yml"
-[[ -f .env.tailscale ]] && COMPOSE_FILES="$COMPOSE_FILES -f docker-compose.tailscale.yml"
+VERSION="${2:-latest}"
 
 # ── Preflight ─────────────────────────────────────────────────────────────────
-heading "OpenClaw Update — target: ${VERSION}"
+heading "OpenClaw Update — mode: ${MODE}, target: ${VERSION}"
 
 CONTAINER_STATUS=$(docker inspect --format='{{.State.Status}}' openclaw-gateway 2>/dev/null || echo "not found")
 if [[ "$CONTAINER_STATUS" != "running" ]]; then
   error "Container 'openclaw-gateway' is not running (status: ${CONTAINER_STATUS})"
-  error "Start it first with: ./setup.sh"
+  error "Start it first with: ./setup.sh ${MODE}"
   exit 1
 fi
 

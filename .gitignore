@@ -3,6 +3,8 @@ openclaw-config/**
 !openclaw-config/.gitkeep
 toolchain/**
 !toolchain/.gitkeep
+tailscale-state/**
+!tailscale-state/.gitkeep
 openclaw-workspace/**
 !openclaw-workspace/.gitkeep
 
@@ -11,7 +13,6 @@ backups/
 
 # Secrets
 .env
-.env.tailscale
 
 # macOS
 .DS_Store

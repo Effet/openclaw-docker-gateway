@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 # setup.sh — Start OpenClaw Gateway in Docker.
-# API keys and channels are configured via: docker compose run --rm -it openclaw onboard
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -12,6 +11,27 @@ warn()    { echo -e "${YELLOW}[!]${NC} $*"; }
 error()   { echo -e "${RED}[✗]${NC} $*" >&2; }
 heading() { echo -e "\n${BOLD}$*${NC}"; }
 
+# ── Mode ──────────────────────────────────────────────────────────────────────
+MODE="${1:-}"
+case "$MODE" in
+  ports)
+    COMPOSE_FILES="-f docker-compose.yml"
+    ;;
+  tailscale)
+    COMPOSE_FILES="-f docker-compose.yml -f docker-compose.tailscale.yml"
+    ;;
+  *)
+    echo -e "${BOLD}Usage:${NC} ./setup.sh <mode>"
+    echo ""
+    echo "  ports       Expose ports directly (127.0.0.1:18789)"
+    echo "  tailscale   Route through Tailscale sidecar (requires TS_AUTHKEY in .env)"
+    echo ""
+    exit 0
+    ;;
+esac
+
+info "Mode: ${MODE}"
+
 # ── Prerequisites ─────────────────────────────────────────────────────────────
 heading "Checking prerequisites..."
 command -v docker &>/dev/null || { error "Docker not found"; exit 1; }
@@ -20,17 +40,10 @@ info "Docker $(docker --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')"
 
 # ── Directories ───────────────────────────────────────────────────────────────
 heading "Preparing directories..."
-mkdir -p openclaw-config openclaw-workspace toolchain
+mkdir -p openclaw-config openclaw-workspace toolchain tailscale-state
 info "openclaw-config/    (gateway config & state)"
 info "openclaw-workspace/ (agent workspace)"
 info "toolchain/          (npm global prefix — persists across restarts)"
-
-# ── Compose files ─────────────────────────────────────────────────────────────
-COMPOSE_FILES="-f docker-compose.yml"
-if [[ -f .env.tailscale ]]; then
-  COMPOSE_FILES="$COMPOSE_FILES -f docker-compose.tailscale.yml"
-  info "Tailscale mode detected (.env.tailscale found)"
-fi
 
 # ── Start ─────────────────────────────────────────────────────────────────────
 heading "Starting container..."
@@ -66,6 +79,6 @@ heading "Done"
 echo "  Onboard  : docker compose $COMPOSE_FILES run --rm -it openclaw onboard"
 echo "  Shell    : docker exec -it openclaw-gateway bash"
 echo "  Logs     : docker compose $COMPOSE_FILES logs -f"
-echo "  Update   : ./update.sh [version]"
+echo "  Update   : ./update.sh ${MODE} [version]"
 echo "  Test     : ./test.sh"
 echo ""

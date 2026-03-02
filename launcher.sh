@@ -12,7 +12,9 @@ GCLAW=/home/node/.npm-global/bin/openclaw
 
 if [ ! -x "$GCLAW" ]; then
     echo "[launcher] Installing openclaw (first run)..."
-    npm install -g --no-fund --no-audit openclaw || { echo "[launcher] Install failed, will retry"; exit 1; }
+    npm install -g --no-fund --no-audit \
+        ${NPM_REGISTRY:+--registry "$NPM_REGISTRY"} \
+        openclaw || { echo "[launcher] Install failed, will retry"; exit 1; }
 fi
 
 echo "[launcher] OpenClaw $("$GCLAW" --version 2>/dev/null)"

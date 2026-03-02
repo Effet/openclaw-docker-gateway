@@ -109,10 +109,10 @@ LAUNCHER_MOUNT=$(docker inspect \
   && pass "launcher.sh mounted at /launcher.sh" \
   || fail "launcher.sh not found as bind mount"
 
-WHOAMI=$(docker exec openclaw-gateway whoami 2>/dev/null || echo "unknown")
-[[ "$WHOAMI" == "node" ]] \
-  && pass "Running as user: node (non-root)" \
-  || fail "Running as: ${WHOAMI} (expected: node)"
+PROC_USER=$(docker exec openclaw-gateway sh -c "ps aux | grep '[o]penclaw' | awk '{print \$1}' | head -1" 2>/dev/null || echo "unknown")
+[[ "$PROC_USER" == "node" ]] \
+  && pass "openclaw process running as: node" \
+  || fail "openclaw process running as: ${PROC_USER} (expected: node)"
 
 LOG=$(docker logs openclaw-gateway 2>&1 | grep "\[launcher\]" | tail -1 || echo "")
 [[ -n "$LOG" ]] && pass "Launcher: ${LOG}" || info "No launcher log line found"

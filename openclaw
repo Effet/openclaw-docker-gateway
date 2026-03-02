@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Wrapper to run openclaw commands inside the gateway container.
+#
+# Usage:
+#   bin/openclaw <command> [args...]
+#
+# Examples:
+#   bin/openclaw health
+#   bin/openclaw onboard
+#   bin/openclaw gateway status
+
+if ! docker inspect openclaw-gateway --format='{{.State.Status}}' 2>/dev/null | grep -q running; then
+  echo "Error: openclaw-gateway is not running. Start it with: bin/setup.sh <ports|tailscale>" >&2
+  exit 1
+fi
+
+exec docker exec -it openclaw-gateway openclaw "$@"
