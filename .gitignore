@@ -1,0 +1,18 @@
+# openclaw-config & toolchain: whitelist mode — only .gitkeep files tracked
+openclaw-config/**
+!openclaw-config/**/
+!openclaw-config/**/.gitkeep
+toolchain/**
+!toolchain/.gitkeep
+
+# Secrets
+.env
+.env.tailscale
+
+# macOS
+.DS_Store
+
+# Editor
+.idea/
+.vscode/
+*.swp

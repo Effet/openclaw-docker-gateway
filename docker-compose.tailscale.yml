@@ -1,0 +1,19 @@
+services:
+  tailscale:
+    image: tailscale/tailscale
+    container_name: openclaw-tailscale
+    restart: unless-stopped
+    env_file: .env.tailscale
+    environment:
+      - TS_USERSPACE=true
+      - TS_SERVE_CONFIG=/config/serve.json
+    volumes:
+      - tailscale-state:/var/lib/tailscale
+      - ./ts-serve.json:/config/serve.json:ro
+
+  openclaw:
+    network_mode: service:tailscale
+    ports: []
+
+volumes:
+  tailscale-state:
