@@ -1,6 +1,7 @@
 FROM node:22
 RUN apt-get update && apt-get install -y \
     supervisor \
+    proxychains4 \
     dnsutils \
     curl \
     netcat-openbsd \

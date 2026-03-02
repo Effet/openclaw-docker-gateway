@@ -18,4 +18,23 @@ if [ ! -x "$GCLAW" ]; then
 fi
 
 echo "[launcher] OpenClaw $("$GCLAW" --version 2>/dev/null)"
+
+# If HTTPS_PROXY is set, route openclaw through proxychains4.
+# Node.js native fetch (undici) does not respect HTTPS_PROXY natively.
+PROXY="${HTTPS_PROXY:-${https_proxy:-}}"
+if [ -n "$PROXY" ]; then
+    hp="${PROXY#*://}"   # strip scheme
+    hp="${hp%%/*}"       # strip trailing path
+    PHOST="${hp%:*}"
+    PPORT="${hp##*:}"
+    cat > /tmp/proxychains.conf << CONF
+strict_chain
+proxy_dns
+[ProxyList]
+http ${PHOST} ${PPORT}
+CONF
+    echo "[launcher] proxychains4 via ${PHOST}:${PPORT}"
+    exec proxychains4 -f /tmp/proxychains.conf -q "$GCLAW" "$@"
+fi
+
 exec "$GCLAW" "$@"
