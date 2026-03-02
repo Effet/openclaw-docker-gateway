@@ -7,12 +7,8 @@ services:
     env_file:
       - path: .env
         required: false
-    cap_add:
-      - NET_ADMIN
-      - SYS_MODULE
-    devices:
-      - /dev/net/tun
     environment:
+      - TS_USERSPACE=true
       - TS_STATE_DIR=/var/lib/tailscale
       - TS_SERVE_CONFIG=/config/serve.json
       - TS_HOSTNAME=${GATEWAY_HOSTNAME:-openclaw-gateway}
@@ -25,5 +21,3 @@ services:
     network_mode: service:tailscale
     hostname: !reset null
     ports: !reset []
-    dns:
-      - 100.100.100.100   # Tailscale MagicDNS resolver
