@@ -1,89 +1,79 @@
 # OpenClaw Docker Gateway
 
-Run [OpenClaw](https://openclaw.ai) Gateway in Docker with a fully isolated config — no interference with your host `~/.openclaw`.
+Run [OpenClaw](https://openclaw.ai) Gateway in Docker with **fully isolated config**, **Tailscale remote access**, and **proxy support** for restricted networks — no interference with your host environment.
 
-## Quick Start (fresh install)
+## Highlights
 
-```bash
-# 1. Build and start (first boot ~2 min — bootstraps openclaw via npm)
-./setup.sh
+- **Config isolation** — all state lives in `./openclaw-config`, never touching `~/.openclaw` on the host
+- **Tailscale sidecar** — expose the gateway over your tailnet with zero open ports, fully declared in Compose
+- **Proxy-aware** — single `PROXY=` env var routes Node.js traffic through proxychains4 (works in China and corporate networks where `HTTPS_PROXY` alone isn't enough)
+- **VM-like UX** — `docker exec` drops you in as `node`, wrapper scripts for every operation, supervisord keeps the process alive without restarting the container
+- **Hot-swap updates** — upgrade openclaw without rebuilding the image
 
-# 2. Configure API keys and channels
-docker compose run --rm -it openclaw onboard
-```
-
-Gateway UI: **http://localhost:18789** (default, no Tailscale)
-
-## Restore from backup
-
-If you have an existing `~/.openclaw` or a previous config backup, restore it **before** running `setup.sh`:
+## Quick Start
 
 ```bash
-# Restore config
-rsync -av /path/to/backup/ ./openclaw-config/
+# 1. Clone and configure
+cp .env.example .env
+$EDITOR .env   # set GATEWAY_HOSTNAME, PROXY, etc. as needed
 
-# Restore workspace (if you have a git remote)
-git clone <remote-url> ./openclaw-workspace
+# 2. Start (ports mode — gateway on localhost:18789)
+./setup.sh ports
 
-# Then start normally
-./setup.sh
+# 3. Configure API keys and channels
+./openclaw onboard
 ```
 
-> **First boot takes ~2 minutes** — `launcher.sh` bootstraps openclaw via npm into the persisted `toolchain/` volume. Subsequent starts are fast.
+Gateway UI: **http://localhost:18789**
 
-## Project Structure
+## Configuration (`.env`)
 
-```
-.
-├── docker-compose.yml              # Default (no Tailscale)
-├── docker-compose.tailscale.yml    # Tailscale sidecar overlay
-├── Dockerfile                      # node:22 + supervisor
-├── launcher.sh                     # Bootstraps and runs openclaw
-├── supervisord.conf                # Process manager config
-├── ts-serve.json                   # Tailscale serve config (Option B)
-├── .env.tailscale.example          # Tailscale auth key template
-├── openclaw-config/                # Isolated OpenClaw config (gitignored)
-└── toolchain/                      # Persisted npm global prefix
-```
+Copy `.env.example` to `.env` and fill in as needed. All fields are optional.
+
+| Variable | Description |
+|----------|-------------|
+| `GATEWAY_HOSTNAME` | Container hostname shown in Tailscale admin (default: `openclaw-gateway`) |
+| `TS_AUTHKEY` | Tailscale OAuth client secret or auth key (Tailscale mode only) |
+| `TS_TAG` | Tailscale tag to advertise, e.g. `tag:server` (Tailscale mode only) |
+| `NPM_REGISTRY` | npm registry mirror, e.g. `https://registry.npmmirror.com` |
+| `PROXY` | Outbound proxy — see [Proxy](#proxy) below |
+
+## Scripts
+
+| Script | Description |
+|--------|-------------|
+| `./setup.sh <ports\|tailscale>` | Build and start the gateway |
+| `./stop.sh <ports\|tailscale> [--down]` | Stop (or stop + remove) containers |
+| `./restart.sh` | Restart the openclaw process via supervisorctl (fast) |
+| `./restart.sh --full <ports\|tailscale>` | Restart the entire container |
+| `./update.sh <ports\|tailscale> [version]` | Hot-swap openclaw to a new version |
+| `./backup.sh` | Snapshot config + commit workspace |
+| `./openclaw <args>` | Run openclaw CLI inside the container |
+
+Run any script without arguments to see its usage.
 
 ## Tailscale
 
-Two options for remote access via Tailscale:
+Use `./setup.sh tailscale` to start with the Tailscale sidecar. The `openclaw` container shares the sidecar's network — no ports are exposed to the host.
 
-### Option A — Host Tailscale (manual, simpler)
-
-Keep the default `docker-compose.yml`. On your host, run once:
-
-```bash
-docker exec <tailscale-container> tailscale serve --bg https / proxy http://localhost:18789
-```
-
-`--bg` persists the config — survives reboots as long as the Tailscale container state volume is mounted.
-
-Connect a node:
+**Prerequisites:**
+1. Create an OAuth client at Tailscale admin → Settings → OAuth clients (`devices:write` scope)
+2. Define your tag in ACL `tagOwners`
+3. Enable HTTPS in Tailscale admin (DNS → Enable HTTPS) for certificate support
 
 ```bash
-openclaw node run --host <device>.tail12345.ts.net --port 443 --tls
+# .env
+TS_AUTHKEY=tskey-client-xxxxxxxxxxxx-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+TS_TAG=tag:server
 ```
-
-### Option B — Tailscale Sidecar (IaC, recommended)
-
-Everything is declared in Compose — no manual steps after first deploy.
 
 ```bash
-cp .env.tailscale.example .env.tailscale
-# Fill in TS_AUTHKEY from https://login.tailscale.com/admin/settings/keys
-
-docker compose -f docker-compose.yml -f docker-compose.tailscale.yml up -d
+./setup.sh tailscale
 ```
 
-No ports are exposed to the host — all traffic goes through the Tailscale network.
+Tailscale state is persisted in `./tailscale-state/` — the device stays registered across restarts without re-authentication.
 
-**Prerequisites:** Enable HTTPS in the Tailscale admin console (DNS → Enable HTTPS). Required for `tailscale serve` to obtain a certificate.
-
-### openclaw config for Tailscale
-
-Add `allowTailscale` so the Gateway trusts Tailscale identity headers — Web UI access becomes token-free for tailnet members:
+**openclaw config for Tailscale** — add `allowTailscale` so the gateway trusts Tailscale identity headers (token-free Web UI access for tailnet members):
 
 ```json
 {
@@ -99,70 +89,78 @@ Add `allowTailscale` so the Gateway trusts Tailscale identity headers — Web UI
 
 > API endpoints (`/v1/*`) still require a token regardless of `allowTailscale`.
 
-## Architecture Notes
+## Proxy
 
-### supervisord as PID 1
+Node.js's native `fetch` (undici) does not respect `HTTPS_PROXY`. This setup uses **proxychains4** to transparently route openclaw's traffic at the socket level.
 
-The container runs `supervisord` as PID 1, which manages the `openclaw gateway` process. This means:
+Set a single variable in `.env`:
 
-- **The container never exits due to openclaw crashing.** supervisord restarts openclaw automatically (up to 5 retries).
-- **`restart: unless-stopped` only triggers on container exit** — since PID 1 never exits, Docker's restart policy is effectively not involved in openclaw recovery. supervisord handles that layer.
+```env
+# HTTP proxy
+PROXY=http://192.168.1.1:7890
 
-### healthcheck behavior
+# HTTP proxy with authentication
+PROXY=http://user:pass@192.168.1.1:7890
 
-The healthcheck probes port 18789 to report whether openclaw is reachable. Two common misconceptions:
+# SOCKS5
+PROXY=socks5://192.168.1.1:1080
+```
 
-- **Failing healthcheck does NOT trigger a container restart.** Docker's restart policy is based on container exit codes, not healthcheck state. An `unhealthy` status is purely informational.
-- **During supervisord restarts of openclaw**, the healthcheck will temporarily fail and the container will show `unhealthy` — this is expected and resolves automatically once openclaw is back up.
+`npm install` also benefits — `PROXY` is automatically exported as `HTTPS_PROXY`/`HTTP_PROXY` for npm during bootstrapping.
 
-The healthcheck is a status indicator, not a recovery mechanism.
+## Restore from Backup
 
-### systemd warning
+Restore an existing config **before** running `setup.sh`:
 
-openclaw may warn that it is not managed by systemd. This is expected in any container environment and does not affect functionality. supervisord is the correct process manager for this context.
+```bash
+rsync -av /path/to/backup/ ./openclaw-config/
 
-## Useful Commands
+# If workspace has a git remote
+git clone <remote-url> ./openclaw-workspace
 
-| Action | Command |
-|--------|---------|
-| Start | `docker compose up -d` |
-| Stop | `docker compose down` |
-| Logs | `docker compose logs -f` |
-| Shell | `docker exec -it openclaw-gateway bash` |
-| openclaw status | `docker exec openclaw-gateway supervisorctl status` |
-| Restart openclaw | `docker exec openclaw-gateway supervisorctl restart openclaw` |
-| Update openclaw | `./update.sh [version]` |
+./setup.sh ports
+```
 
 ## Backup
 
-`backup.sh` snapshots `openclaw-config` and commits `openclaw-workspace` to its own git history.
+`backup.sh` snapshots `openclaw-config/` as a `.tar.gz` and commits `openclaw-workspace/` to its own git history.
 
 ```bash
 ./backup.sh
-```
 
-**Schedule with cron** (e.g. every hour):
-
-```bash
-crontab -e
-# add:
+# Schedule with cron (every hour)
 0 * * * * /path/to/openclaw-docker-gateway/backup.sh >> /tmp/openclaw-backup.log 2>&1
 ```
 
-**Push workspace to a remote** (optional):
+**Push workspace to a remote** (optional — `backup.sh` will push automatically once configured):
 
 ```bash
-cd openclaw-workspace
-git remote add origin <your-private-repo-url>
+cd openclaw-workspace && git remote add origin <your-private-repo-url>
 ```
-
-Once a remote is configured, `backup.sh` will push automatically after each commit.
 
 ## Updating OpenClaw
 
 ```bash
-./update.sh           # install latest
-./update.sh 2026.2.26 # install a specific version
+./update.sh ports            # latest
+./update.sh ports 2026.3.1   # specific version
 ```
 
 Hot-swaps the binary into the `toolchain/` volume and restarts the gateway — no image rebuild needed.
+
+## Architecture Notes
+
+### supervisord as PID 1
+
+`supervisord` manages the `openclaw gateway` process. Key implications:
+
+- The container never exits due to openclaw crashing — supervisord restarts it automatically (up to 5 retries)
+- `restart: unless-stopped` is effectively not involved in openclaw recovery; supervisord handles that layer
+- `./restart.sh` restarts just the openclaw process without touching the container
+
+### Healthcheck
+
+The healthcheck probes port 18789. A failing healthcheck does **not** trigger a container restart — Docker's restart policy is based on container exit codes, not healthcheck state. An `unhealthy` status is purely informational and resolves automatically once openclaw recovers.
+
+### First Boot
+
+On first start, `launcher.sh` installs openclaw via `npm install -g`. This takes ~2 minutes. The binary is cached in `./toolchain/` — subsequent starts are fast.
