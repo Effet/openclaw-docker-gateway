@@ -5,8 +5,8 @@ toolchain/**
 !toolchain/.gitkeep
 tailscale-state/**
 !tailscale-state/.gitkeep
-openclaw-workspace/**
-!openclaw-workspace/.gitkeep
+# workspace is created by setup.sh / Docker; may itself be a git repo
+openclaw-workspace/
 
 # Backups
 backups/
