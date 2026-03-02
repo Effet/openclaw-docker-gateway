@@ -27,6 +27,9 @@ heading() { echo -e "\n${BOLD}$*${NC}"; }
 
 VERSION="${1:-latest}"
 
+COMPOSE_FILES="-f docker-compose.yml"
+[[ -f .env.tailscale ]] && COMPOSE_FILES="$COMPOSE_FILES -f docker-compose.tailscale.yml"
+
 # ── Preflight ─────────────────────────────────────────────────────────────────
 heading "OpenClaw Update — target: ${VERSION}"
 
@@ -55,7 +58,7 @@ info "Installed: ${NEW_VERSION}"
 
 # ── Restart ───────────────────────────────────────────────────────────────────
 heading "Restarting gateway to activate new version..."
-docker compose restart openclaw
+docker compose $COMPOSE_FILES restart openclaw
 
 # Wait for healthy
 TIMEOUT=60
@@ -65,7 +68,7 @@ while true; do
   [[ "$STATUS" == "healthy" ]] && break
   if [[ $ELAPSED -ge $TIMEOUT ]]; then
     error "Gateway did not become healthy after restart (status: ${STATUS})"
-    echo "Check logs: docker compose logs -f"
+    echo "Check logs: docker compose $COMPOSE_FILES logs -f"
     exit 1
   fi
   sleep 3; ELAPSED=$((ELAPSED + 3)); echo -n "."
