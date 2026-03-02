@@ -3,7 +3,8 @@ services:
     build: .
     container_name: openclaw-gateway
     restart: unless-stopped
-    entrypoint: ["supervisord", "-c", "/supervisord.conf"]
+    entrypoint: ["/entrypoint.sh"]
+    command: ["supervisord", "-c", "/supervisord.conf"]
     volumes:
       - ./openclaw-config:/home/node/.openclaw          # config & state (isolated from host)
       - ./openclaw-workspace:/home/node/.openclaw/workspace  # agent workspace
