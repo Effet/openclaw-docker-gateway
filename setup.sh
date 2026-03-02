@@ -25,9 +25,16 @@ info "openclaw-config/    (gateway config & state)"
 info "openclaw-workspace/ (agent workspace)"
 info "toolchain/          (npm global prefix — persists across restarts)"
 
+# ── Compose files ─────────────────────────────────────────────────────────────
+COMPOSE_FILES="-f docker-compose.yml"
+if [[ -f .env.tailscale ]]; then
+  COMPOSE_FILES="$COMPOSE_FILES -f docker-compose.tailscale.yml"
+  info "Tailscale mode detected (.env.tailscale found)"
+fi
+
 # ── Start ─────────────────────────────────────────────────────────────────────
 heading "Starting container..."
-docker compose up -d --build
+docker compose $COMPOSE_FILES up -d --build
 
 info "Waiting for gateway to become healthy..."
 info "First run installs openclaw via npm (~2 min). Subsequent starts are fast."
@@ -38,7 +45,7 @@ while true; do
   [[ "$STATUS" == "healthy" ]] && break
   if [[ $ELAPSED -ge $TIMEOUT ]]; then
     error "Gateway did not become healthy within ${TIMEOUT}s (status: ${STATUS})"
-    docker compose logs --tail=20
+    docker compose $COMPOSE_FILES logs --tail=20
     exit 1
   fi
   sleep 5; ELAPSED=$((ELAPSED + 5)); echo -n "."
@@ -51,14 +58,14 @@ if [[ ! -s openclaw-config/openclaw.json ]]; then
   echo ""
   warn "No config found — run the onboarding wizard to set up API keys and channels:"
   echo ""
-  echo -e "  ${BOLD}docker compose run --rm -it openclaw onboard${NC}"
+  echo -e "  ${BOLD}docker compose $COMPOSE_FILES run --rm -it openclaw onboard${NC}"
   echo ""
 fi
 
 heading "Done"
-echo "  Onboard  : docker compose run --rm -it openclaw onboard"
+echo "  Onboard  : docker compose $COMPOSE_FILES run --rm -it openclaw onboard"
 echo "  Shell    : docker exec -it openclaw-gateway bash"
-echo "  Logs     : docker compose logs -f"
+echo "  Logs     : docker compose $COMPOSE_FILES logs -f"
 echo "  Update   : ./update.sh [version]"
 echo "  Test     : ./test.sh"
 echo ""
