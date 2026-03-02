@@ -9,11 +9,6 @@ services:
     env_file:
       - path: .env
         required: false
-    environment:
-      - NPM_REGISTRY
-      - HTTPS_PROXY
-      - HTTP_PROXY
-      - NO_PROXY
     volumes:
       - ./openclaw-config:/home/node/.openclaw          # config & state (isolated from host)
       - ./openclaw-workspace:/home/node/.openclaw/workspace  # agent workspace
