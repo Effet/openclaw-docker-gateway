@@ -8,6 +8,12 @@ export HOME=/home/node
 export NPM_CONFIG_PREFIX=/home/node/.npm-global
 export PATH="/home/node/.npm-global/bin:$PATH"
 
+# PROXY=scheme://[user:pass@]host:port  →  propagate to standard vars for npm etc.
+if [ -n "${PROXY:-}" ]; then
+    export HTTPS_PROXY="$PROXY"
+    export HTTP_PROXY="$PROXY"
+fi
+
 GCLAW=/home/node/.npm-global/bin/openclaw
 
 if [ ! -x "$GCLAW" ]; then
