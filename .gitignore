@@ -1,9 +1,13 @@
-# openclaw-config & toolchain: whitelist mode — only .gitkeep files tracked
+# runtime dirs: track only .gitkeep to preserve directory structure
 openclaw-config/**
-!openclaw-config/**/
-!openclaw-config/**/.gitkeep
+!openclaw-config/.gitkeep
 toolchain/**
 !toolchain/.gitkeep
+openclaw-workspace/**
+!openclaw-workspace/.gitkeep
+
+# Backups
+backups/
 
 # Secrets
 .env
