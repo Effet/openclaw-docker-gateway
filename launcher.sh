@@ -50,6 +50,8 @@ if [ -n "$PROXY" ]; then
     cat > /tmp/proxychains.conf << CONF
 strict_chain
 proxy_dns
+localnet 127.0.0.0/255.0.0.0
+localnet ::1/128
 [ProxyList]
 ${PROXY_LINE}
 CONF
