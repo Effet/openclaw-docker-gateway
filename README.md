@@ -2,21 +2,32 @@
 
 Run [OpenClaw](https://openclaw.ai) Gateway in Docker with a fully isolated config — no interference with your host `~/.openclaw`.
 
-## Quick Start
+## Quick Start (fresh install)
 
 ```bash
-# 1. Build and start
-docker compose up -d
+# 1. Build and start (first boot ~2 min — bootstraps openclaw via npm)
+./setup.sh
 
 # 2. Configure API keys and channels
-docker exec -it openclaw-gateway bash
-
-# 3. Check status
-docker compose ps
-docker compose logs -f
+docker compose run --rm -it openclaw onboard
 ```
 
 Gateway UI: **http://localhost:18789** (default, no Tailscale)
+
+## Restore from backup
+
+If you have an existing `~/.openclaw` or a previous config backup, restore it **before** running `setup.sh`:
+
+```bash
+# Restore config
+rsync -av /path/to/backup/ ./openclaw-config/
+
+# Restore workspace (if you have a git remote)
+git clone <remote-url> ./openclaw-workspace
+
+# Then start normally
+./setup.sh
+```
 
 > **First boot takes ~2 minutes** — `launcher.sh` bootstraps openclaw via npm into the persisted `toolchain/` volume. Subsequent starts are fast.
 
@@ -121,6 +132,31 @@ openclaw may warn that it is not managed by systemd. This is expected in any con
 | openclaw status | `docker exec openclaw-gateway supervisorctl status` |
 | Restart openclaw | `docker exec openclaw-gateway supervisorctl restart openclaw` |
 | Update openclaw | `./update.sh [version]` |
+
+## Backup
+
+`backup.sh` snapshots `openclaw-config` and commits `openclaw-workspace` to its own git history.
+
+```bash
+./backup.sh
+```
+
+**Schedule with cron** (e.g. every hour):
+
+```bash
+crontab -e
+# add:
+0 * * * * /path/to/openclaw-docker-gateway/backup.sh >> /tmp/openclaw-backup.log 2>&1
+```
+
+**Push workspace to a remote** (optional):
+
+```bash
+cd openclaw-workspace
+git remote add origin <your-private-repo-url>
+```
+
+Once a remote is configured, `backup.sh` will push automatically after each commit.
 
 ## Updating OpenClaw
 
