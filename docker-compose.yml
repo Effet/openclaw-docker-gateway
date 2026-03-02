@@ -5,8 +5,9 @@ services:
     restart: unless-stopped
     entrypoint: ["supervisord", "-c", "/supervisord.conf"]
     volumes:
-      - ./openclaw-config:/home/node/.openclaw   # config & state (isolated from host)
-      - ./toolchain:/home/node/.npm-global        # persisted npm global prefix (PROT-003)
+      - ./openclaw-config:/home/node/.openclaw          # config & state (isolated from host)
+      - ./openclaw-workspace:/home/node/.openclaw/workspace  # agent workspace
+      - ./toolchain:/home/node/.npm-global               # persisted npm global prefix (PROT-003)
       - ./launcher.sh:/launcher.sh:ro
       - ./supervisord.conf:/supervisord.conf:ro
     ports:
@@ -22,3 +23,4 @@ services:
       interval: 10s
       timeout: 5s
       retries: 6
+
