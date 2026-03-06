@@ -64,7 +64,12 @@ heading "Installing openclaw@${VERSION} into toolchain volume..."
 
 docker exec \
   openclaw-gateway \
-  sh -c "NPM_CONFIG_PREFIX=/home/node/.npm-global HTTPS_PROXY=\"\${PROXY:-}\" HTTP_PROXY=\"\${PROXY:-}\" npm install -g --no-fund --no-audit \"openclaw@${VERSION}\""
+  sh -c "export NPM_CONFIG_PREFIX=/home/node/.npm-global
+    if [ -f /tmp/proxychains.conf ]; then
+      exec proxychains4 -f /tmp/proxychains.conf -q npm install -g --no-fund --no-audit 'openclaw@${VERSION}'
+    else
+      exec npm install -g --no-fund --no-audit 'openclaw@${VERSION}'
+    fi"
 
 NEW_VERSION=$(docker exec openclaw-gateway sh -c "NPM_CONFIG_PREFIX=/home/node/.npm-global /home/node/.npm-global/bin/openclaw --version 2>/dev/null || echo 'unknown'")
 info "Installed: ${NEW_VERSION}"
