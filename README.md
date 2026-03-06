@@ -102,11 +102,15 @@ PROXY=http://192.168.1.1:7890
 # HTTP proxy with authentication
 PROXY=http://user:pass@192.168.1.1:7890
 
-# SOCKS5
+# SOCKS5 (recommended — see below)
 PROXY=socks5://192.168.1.1:1080
 ```
 
-`npm install` also benefits — `PROXY` is automatically exported as `HTTPS_PROXY`/`HTTP_PROXY` for npm during bootstrapping.
+`npm install` also benefits — `PROXY` is automatically used during bootstrapping and hot-swap updates.
+
+**Prefer SOCKS5 over HTTP proxy.** HTTP CONNECT proxies are designed for HTTPS (port 443) and often block or mishandle connections to other ports (e.g. SSH on port 22). Some npm packages depend on private git repos cloned over SSH — with an HTTP proxy these installs fail with a misleading `Permission denied (publickey)` error. SOCKS5 tunnels raw TCP regardless of port, so SSH git dependencies work correctly.
+
+**DNS hijacking.** proxychains4 is configured with `proxy_dns`, meaning DNS resolution is also routed through the proxy. This prevents DNS pollution/hijacking (common in China and some corporate networks) from causing silent failures that masquerade as authentication errors.
 
 ## Restore from Backup
 
