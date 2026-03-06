@@ -76,12 +76,12 @@ if [[ ! -s openclaw-config/openclaw.json ]]; then
   echo ""
   warn "No config found — run the onboarding wizard to set up API keys and channels:"
   echo ""
-  echo -e "  ${BOLD}docker compose $COMPOSE_FILES run --rm -it openclaw onboard${NC}"
+  echo -e "  ${BOLD}./openclaw onboard${NC}"
   echo ""
 fi
 
 heading "Done"
-echo "  Onboard  : docker compose $COMPOSE_FILES run --rm -it openclaw onboard"
+echo "  Onboard  : ./openclaw onboard"
 echo "  Shell    : docker exec -it openclaw-gateway bash"
 echo "  Logs     : docker compose $COMPOSE_FILES logs -f"
 echo "  Update   : ./update.sh ${MODE} [version]"

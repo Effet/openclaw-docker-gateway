@@ -79,7 +79,7 @@ if [[ -s openclaw-config/openclaw.json ]]; then
   pass "openclaw.json exists — onboarding completed"
 else
   info "No config yet. Run the onboarding wizard:"
-  info "  docker compose run --rm -it openclaw onboard"
+  info "  ./openclaw onboard"
 fi
 
 # ── Test 7: Toolchain volume ──────────────────────────────────────────────────
