@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# backup.sh — Snapshot openclaw-config and commit openclaw-workspace.
+# backup.sh — Snapshot openclaw-config and commit workspace git repos.
 #
 # Usage:
 #   ./backup.sh              # run once
@@ -19,25 +19,40 @@ BACKUP_FILE="backups/openclaw-config-${TIMESTAMP}.tar.gz"
 tar -czf "$BACKUP_FILE" --exclude='openclaw-config/logs' openclaw-config/
 ok "Config snapshot → $BACKUP_FILE"
 
-# ── 2. openclaw-workspace git ──────────────────────────────────────────────
-cd openclaw-workspace
+# ── 2. git backup helper ────────────────────────────────────────────────────
+# Usage: backup_git_dir <dir> <label>
+backup_git_dir() {
+  local dir="$1" label="$2"
 
-if [ ! -d .git ]; then
-  git init -q
-  git config user.name "openclaw-backup"
-  git config user.email "backup@local"
-  ok "Initialized git repo in openclaw-workspace/"
-fi
+  [ -d "$dir" ] || { ok "${label}: directory not found, skipping"; return; }
 
-if [ -n "$(git status --porcelain)" ]; then
-  git add -A
-  git commit -q -m "backup: ${TIMESTAMP}"
-  ok "Workspace committed (${TIMESTAMP})"
-else
-  ok "Workspace: nothing to commit"
-fi
+  cd "$SCRIPT_DIR/$dir"
 
-if git remote get-url origin &>/dev/null; then
-  git push -q
-  ok "Workspace pushed to remote"
-fi
+  if [ ! -d .git ]; then
+    git init -q
+    git config user.name "openclaw-backup"
+    git config user.email "backup@local"
+    ok "Initialized git repo in ${dir}/"
+  fi
+
+  if [ -n "$(git status --porcelain)" ]; then
+    git add -A
+    git commit -q -m "backup: ${TIMESTAMP}"
+    ok "${label} committed (${TIMESTAMP})"
+  else
+    ok "${label}: nothing to commit"
+  fi
+
+  if git remote get-url origin &>/dev/null; then
+    git push -q
+    ok "${label} pushed to remote"
+  fi
+
+  cd "$SCRIPT_DIR"
+}
+
+# ── 3. openclaw-workspace ───────────────────────────────────────────────────
+backup_git_dir "openclaw-workspace" "workspace"
+
+# ── 4. openclaw-workspaces ──────────────────────────────────────────────────
+backup_git_dir "openclaw-workspaces" "workspaces"
