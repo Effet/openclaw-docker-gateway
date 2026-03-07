@@ -7,6 +7,7 @@ tailscale-state/**
 !tailscale-state/.gitkeep
 # workspace is created by setup.sh / Docker; may itself be a git repo
 openclaw-workspace/
+openclaw-workspaces/
 
 # Backups
 backups/

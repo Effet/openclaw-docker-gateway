@@ -151,6 +151,18 @@ cd openclaw-workspace && git remote add origin <your-private-repo-url>
 
 热替换二进制文件到 `toolchain/` 卷并重启 gateway — 无需重建镜像。
 
+## 多 Workspace
+
+openclaw 支持为每个 agent 配置独立的 workspace 路径。额外的 workspace 存放在宿主机的 `./openclaw-workspaces/` 目录，挂载到容器内 `/home/node/workspaces`。
+
+按 agent 建子目录：
+
+```bash
+mkdir -p openclaw-workspaces/agent-a openclaw-workspaces/agent-b
+```
+
+在 openclaw 配置中将各 agent 的 workspace 路径指向 `/home/node/workspaces/agent-a` 即可。主 workspace（`./openclaw-workspace`）不受影响。
+
 ## 架构说明
 
 ### supervisord 作为 PID 1

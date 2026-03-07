@@ -153,6 +153,18 @@ cd openclaw-workspace && git remote add origin <your-private-repo-url>
 
 Hot-swaps the binary into the `toolchain/` volume and restarts the gateway — no image rebuild needed.
 
+## Multiple Workspaces
+
+openclaw supports configuring the workspace path per agent. Additional workspaces live in `./openclaw-workspaces/` on the host, mounted at `/home/node/workspaces` in the container.
+
+Create a subdirectory per agent:
+
+```bash
+mkdir -p openclaw-workspaces/agent-a openclaw-workspaces/agent-b
+```
+
+Then point each agent's workspace to `/home/node/workspaces/agent-a` in openclaw's config. The main workspace (`./openclaw-workspace`) is unaffected.
+
 ## Architecture Notes
 
 ### supervisord as PID 1

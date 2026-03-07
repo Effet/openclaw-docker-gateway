@@ -40,11 +40,11 @@ info "Docker $(docker --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')"
 
 # ── Directories ───────────────────────────────────────────────────────────────
 heading "Preparing directories..."
-mkdir -p openclaw-config openclaw-workspace toolchain tailscale-state
+mkdir -p openclaw-config openclaw-workspace openclaw-workspaces toolchain tailscale-state
 # On Linux, if running as root, chown dirs to node uid (1000) so the
 # container's node user can write to the bind mounts.
 if [ "$(uname -s)" = "Linux" ] && [ "$(id -u)" = "0" ]; then
-  chown -R 1000:1000 openclaw-config toolchain tailscale-state
+  chown -R 1000:1000 openclaw-config toolchain tailscale-state openclaw-workspaces
 fi
 info "openclaw-config/    (gateway config & state)"
 info "openclaw-workspace/ (agent workspace)"
