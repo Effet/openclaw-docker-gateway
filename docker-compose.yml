@@ -13,10 +13,11 @@ services:
       - ./openclaw-config:/home/node/.openclaw          # config & state (isolated from host)
       - ./openclaw-workspace:/home/node/.openclaw/workspace  # agent workspace
       - ./toolchain:/home/node/.npm-global               # persisted npm global prefix (PROT-003)
-      - ./launcher.sh:/launcher.sh:ro
-      - ./supervisord.conf:/supervisord.conf:ro
+      - ./container/launcher.sh:/launcher.sh:ro
+      - ./container/supervisord.conf:/supervisord.conf:ro
       - ./openclaw-workspaces:/home/node/workspaces
       - ./openclaw-repos:/home/node/repos
+      - ./container:/home/node/scripts:ro
     ports:
       - "127.0.0.1:18789:18789"
       - "18791:18791"
