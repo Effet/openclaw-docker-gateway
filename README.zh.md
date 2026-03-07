@@ -163,6 +163,25 @@ mkdir -p openclaw-workspaces/agent-a openclaw-workspaces/agent-b
 
 在 openclaw 配置中将各 agent 的 workspace 路径指向 `/home/node/workspaces/agent-a` 即可。主 workspace（`./openclaw-workspace`）不受影响。
 
+## 共享 Git 仓库（Bare Repo）
+
+各 agent 可通过挂载在容器内 `/home/node/repos` 的本地 bare repo 共享知识库。
+
+初始化 bare repo：
+
+```bash
+git init --bare openclaw-repos/knowledge.git
+```
+
+在任意 agent 的 workspace 中：
+
+```bash
+git remote add origin /home/node/repos/knowledge.git
+git push origin main
+```
+
+所有能访问该容器的 agent 均可 clone 或 pull，无需网络。
+
 ## 架构说明
 
 ### supervisord 作为 PID 1

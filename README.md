@@ -165,6 +165,25 @@ mkdir -p openclaw-workspaces/agent-a openclaw-workspaces/agent-b
 
 Then point each agent's workspace to `/home/node/workspaces/agent-a` in openclaw's config. The main workspace (`./openclaw-workspace`) is unaffected.
 
+## Shared Git Repos (Bare Repos)
+
+Agents can share knowledge via local bare git repos mounted at `/home/node/repos` in the container.
+
+Initialize a bare repo:
+
+```bash
+git init --bare openclaw-repos/knowledge.git
+```
+
+Then inside any agent's workspace:
+
+```bash
+git remote add origin /home/node/repos/knowledge.git
+git push origin main
+```
+
+Any agent with access to the container can clone or pull from the same path. No network required.
+
 ## Architecture Notes
 
 ### supervisord as PID 1

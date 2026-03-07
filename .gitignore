@@ -8,6 +8,7 @@ tailscale-state/**
 # workspace is created by setup.sh / Docker; may itself be a git repo
 openclaw-workspace/
 openclaw-workspaces/
+openclaw-repos/
 
 # Backups
 backups/
