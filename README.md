@@ -165,6 +165,32 @@ mkdir -p openclaw-workspaces/agent-a openclaw-workspaces/agent-b
 
 Then point each agent's workspace to `/home/node/workspaces/agent-a` in openclaw's config. The main workspace (`./openclaw-workspace`) is unaffected.
 
+## Skills
+
+The `container/skills/` directory contains openclaw skills shipped with this repo. Skills teach agents how to use the gateway's scripts (backup, workspace management, bare repos).
+
+**Enable globally** (all agents) — add to `openclaw.json`:
+
+```json
+{
+  "skills": {
+    "load": {
+      "extraDirs": ["/home/node/scripts/skills"]
+    }
+  }
+}
+```
+
+**Enable per agent** (symlink into workspace):
+
+```bash
+mkdir -p openclaw-workspaces/agent-a/skills
+ln -s /home/node/scripts/skills/gateway-ops \
+      /home/node/workspaces/agent-a/skills/gateway-ops
+```
+
+The skill source lives in `container/skills/` and is mounted read-only at `/home/node/scripts/skills/`. Runtime-installed skills (`~/.openclaw/skills/`) are unaffected.
+
 ## Shared Git Repos (Bare Repos)
 
 Agents can share knowledge via local bare git repos mounted at `/home/node/repos` in the container.

@@ -163,6 +163,32 @@ mkdir -p openclaw-workspaces/agent-a openclaw-workspaces/agent-b
 
 在 openclaw 配置中将各 agent 的 workspace 路径指向 `/home/node/workspaces/agent-a` 即可。主 workspace（`./openclaw-workspace`）不受影响。
 
+## Skills
+
+`container/skills/` 目录包含随本 repo 分发的 openclaw skill，教会 agent 如何使用 gateway 脚本（备份、workspace 管理、bare repo）。
+
+**全局启用**（所有 agent）— 在 `openclaw.json` 中添加：
+
+```json
+{
+  "skills": {
+    "load": {
+      "extraDirs": ["/home/node/scripts/skills"]
+    }
+  }
+}
+```
+
+**按 agent 启用**（软链到对应 workspace）：
+
+```bash
+mkdir -p openclaw-workspaces/agent-a/skills
+ln -s /home/node/scripts/skills/gateway-ops \
+      /home/node/workspaces/agent-a/skills/gateway-ops
+```
+
+skill 源文件在 `container/skills/`，以只读方式挂载到容器内 `/home/node/scripts/skills/`。运行时安装的 skill（`~/.openclaw/skills/`）不受影响。
+
 ## 共享 Git 仓库（Bare Repo）
 
 各 agent 可通过挂载在容器内 `/home/node/repos` 的本地 bare repo 共享知识库。
