@@ -129,7 +129,9 @@ git clone <remote-url> ./openclaw-workspace
 
 ## Backup
 
-`backup.sh` snapshots `openclaw-config/` as a `.tar.gz` and commits `openclaw-workspace/` to its own git history.
+### Snapshot (host)
+
+`backup.sh` snapshots all four data directories (`openclaw-config`, `openclaw-workspace`, `openclaw-workspaces`, `openclaw-repos`) as a single `.tar.gz`. Runtime logs are excluded; `.git` dirs are included for disaster recovery.
 
 ```bash
 ./backup.sh
@@ -138,10 +140,18 @@ git clone <remote-url> ./openclaw-workspace
 0 * * * * /path/to/openclaw-docker-gateway/backup.sh >> /tmp/openclaw-backup.log 2>&1
 ```
 
-**Push workspace to a remote** (optional — `backup.sh` will push automatically once configured):
+### Workspace sync (container)
+
+`sync.sh` commits and pushes workspace changes to local bare repos in `/home/node/repos/`. Bare repos are auto-initialized if missing; remote `origin` is set automatically if not configured (existing remotes are never overridden, making future migration to a real git server seamless).
 
 ```bash
-cd openclaw-workspace && git remote add origin <your-private-repo-url>
+docker exec openclaw-gateway /home/node/scripts/sync.sh
+```
+
+**Push workspace to a real remote** (optional — set the remote before running sync):
+
+```bash
+docker exec openclaw-gateway git -C /home/node/.openclaw/workspace remote set-url origin <your-remote-url>
 ```
 
 ## Updating OpenClaw

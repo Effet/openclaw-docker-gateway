@@ -7,18 +7,27 @@ description: Manage this OpenClaw Docker Gateway — backup workspaces and bare 
 
 你运行在一个 Docker 容器中。以下脚本挂载在 `/home/node/scripts/`，可直接执行。
 
-## 备份 Workspace
+## 备份与同步
 
-将 workspace 和 workspaces 目录的变更提交到各自的 git 历史：
+### 快照备份（宿主机执行）
+
+在宿主机运行，将所有数据目录打包为 tar.gz：
 
 ```bash
-/home/node/scripts/backup.sh
+./backup.sh
 ```
 
-- `/home/node/.openclaw/workspace` — 主 workspace
-- `/home/node/workspaces/` — 多 agent workspace 根目录
+### Workspace 同步（容器内执行）
 
-若目录尚未初始化为 git repo，脚本会自动执行 `git init`。若已配置 `origin` remote，会自动 push。
+将 workspace 变更 commit 并 push 到本地 bare repo：
+
+```bash
+/home/node/scripts/sync.sh
+```
+
+- 自动初始化 bare repo（如不存在）
+- 自动配置 remote origin（如未配置）
+- 支持未来迁移到真实 git remote server（已有 remote 不会被覆盖）
 
 ## Workspace 管理
 

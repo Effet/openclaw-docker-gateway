@@ -127,7 +127,9 @@ git clone <remote-url> ./openclaw-workspace
 
 ## 备份
 
-`backup.sh` 将 `openclaw-config/` 快照为 `.tar.gz`，并将 `openclaw-workspace/` 提交到自己的 git 历史。
+### 快照（宿主机）
+
+`backup.sh` 将四个数据目录（`openclaw-config`、`openclaw-workspace`、`openclaw-workspaces`、`openclaw-repos`）打包为单个 `.tar.gz`。排除运行时日志，保留 `.git` 目录以支持灾难恢复。
 
 ```bash
 ./backup.sh
@@ -136,10 +138,18 @@ git clone <remote-url> ./openclaw-workspace
 0 * * * * /path/to/openclaw-docker-gateway/backup.sh >> /tmp/openclaw-backup.log 2>&1
 ```
 
-**推送工作区到远程**（可选 — 配置后 `backup.sh` 会自动推送）：
+### Workspace 同步（容器内）
+
+`sync.sh` 将 workspace 变更 commit 并 push 到 `/home/node/repos/` 中的本地 bare repo。bare repo 不存在时自动初始化；remote `origin` 未配置时自动设置（已有 remote 不会被覆盖，方便未来无缝迁移到真实 git server）。
 
 ```bash
-cd openclaw-workspace && git remote add origin <your-private-repo-url>
+docker exec openclaw-gateway /home/node/scripts/sync.sh
+```
+
+**推送 workspace 到真实 remote**（可选——在运行 sync 前设置 remote）：
+
+```bash
+docker exec openclaw-gateway git -C /home/node/.openclaw/workspace remote set-url origin <your-remote-url>
 ```
 
 ## 更新 OpenClaw
