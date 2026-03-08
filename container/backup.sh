@@ -2,6 +2,8 @@
 # backup.sh (container-side) — git commit workspace and workspaces.
 # Run via: docker exec openclaw-gateway /home/node/scripts/backup.sh
 
+[ -f /.dockerenv ] || { echo "Error: this script must run inside the container"; exit 1; }
+
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)
 
 backup_git_dir() {

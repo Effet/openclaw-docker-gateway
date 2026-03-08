@@ -7,6 +7,8 @@
 #   init <name>       Initialize a new bare repo (name without .git)
 #   delete <name>     Delete a bare repo
 
+[ -f /.dockerenv ] || { echo "Error: this script must run inside the container"; exit 1; }
+
 REPOS_DIR=/home/node/repos
 
 case "${1:-}" in
