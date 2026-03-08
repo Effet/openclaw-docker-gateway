@@ -34,13 +34,6 @@ if [ ${#DIRS[@]} -eq 0 ]; then
   exit 0
 fi
 
-tar -czf "$BACKUP_FILE" \
-  --exclude='*/logs' \
-  --exclude='*/logs/*' \
-  "${DIRS[@]}"
-
-ok "Snapshot → ${BACKUP_FILE}"
-
 # ── Workspace sync (via container) ─────────────────────────────────────────
 STATUS=$(docker inspect --format='{{.State.Status}}' openclaw-gateway 2>/dev/null || echo "not found")
 if [ "$STATUS" = "running" ]; then
@@ -48,3 +41,10 @@ if [ "$STATUS" = "running" ]; then
 else
   warn "Container not running — skipping workspace sync"
 fi
+
+tar -czf "$BACKUP_FILE" \
+  --exclude='*/logs' \
+  --exclude='*/logs/*' \
+  "${DIRS[@]}"
+
+ok "Snapshot → ${BACKUP_FILE}"
