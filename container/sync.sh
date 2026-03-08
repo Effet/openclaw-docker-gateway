@@ -52,5 +52,12 @@ sync_repo() {
   fi
 }
 
+# Ensure .openclaw config repo ignores runtime subdirs
+CONFIG_DIR=/home/node/.openclaw
+if [ ! -f "${CONFIG_DIR}/.gitignore" ]; then
+  printf 'workspace/\nlogs/\nagents/\n' > "${CONFIG_DIR}/.gitignore"
+fi
+sync_repo "$CONFIG_DIR" "config"
+
 sync_repo /home/node/.openclaw/workspace "workspace"
 sync_repo /home/node/workspaces "workspaces"
