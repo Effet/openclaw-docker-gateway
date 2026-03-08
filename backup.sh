@@ -40,3 +40,11 @@ tar -czf "$BACKUP_FILE" \
   "${DIRS[@]}"
 
 ok "Snapshot → ${BACKUP_FILE}"
+
+# ── Workspace sync (via container) ─────────────────────────────────────────
+STATUS=$(docker inspect --format='{{.State.Status}}' openclaw-gateway 2>/dev/null || echo "not found")
+if [ "$STATUS" = "running" ]; then
+  docker exec openclaw-gateway /home/node/scripts/sync.sh
+else
+  warn "Container not running — skipping workspace sync"
+fi
