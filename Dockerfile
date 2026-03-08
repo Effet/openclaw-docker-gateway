@@ -7,6 +7,8 @@ RUN apt-get update && apt-get install -y \
     netcat-openbsd \
     iputils-ping \
     iproute2 \
+    less \
+    vim \
     && rm -rf /var/lib/apt/lists/*
 ENV NPM_CONFIG_PREFIX=/home/node/.npm-global \
     PATH="/home/node/.npm-global/bin:/usr/local/bin:/usr/bin:/bin"
