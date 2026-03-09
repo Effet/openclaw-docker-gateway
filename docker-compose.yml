@@ -6,6 +6,8 @@ services:
     restart: unless-stopped
     entrypoint: ["/entrypoint.sh"]
     command: ["supervisord", "-c", "/supervisord.conf"]
+    environment:
+      TZ: Asia/Shanghai
     env_file:
       - path: .env
         required: false
