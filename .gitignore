@@ -13,6 +13,9 @@ openclaw-repos/
 # Backups
 backups/
 
+# Logs
+openclaw-logs/
+
 # Secrets
 .env
 
