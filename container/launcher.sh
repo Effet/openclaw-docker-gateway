@@ -21,6 +21,10 @@ fi
 
 echo "[launcher] OpenClaw $("$GCLAW" --version 2>/dev/null)"
 
+# Kill any stale gateway instance before starting (prevents port 18789 conflict
+# when supervisor restarts and the previous openclaw-gateway became an orphan).
+"$GCLAW" gateway stop 2>/dev/null && echo "[launcher] Stopped stale gateway" || true
+
 # If PROXY is set, route openclaw through proxychains4.
 if [ -n "${PROXY:-}" ]; then
     SCHEME="${PROXY%%://*}"
