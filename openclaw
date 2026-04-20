@@ -13,7 +13,14 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 if docker inspect openclaw-gateway --format='{{.State.Status}}' 2>/dev/null | grep -q running; then
-  exec docker exec -it openclaw-gateway openclaw "$@"
+  # Wrap in proxychains when the daemon has generated its conf (PROXY is set).
+  # Falls back to direct exec when no proxy configured.
+  exec docker exec -it openclaw-gateway sh -c '
+    if [ -f /tmp/proxychains.conf ]; then
+      exec proxychains4 -f /tmp/proxychains.conf -q openclaw "$@"
+    fi
+    exec openclaw "$@"
+  ' -- "$@"
 else
   exec docker compose -f "$SCRIPT_DIR/docker-compose.yml" run --rm --entrypoint openclaw openclaw "$@"
 fi
