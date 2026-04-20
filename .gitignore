@@ -1,11 +1,8 @@
-# runtime dirs: track only .gitkeep to preserve directory structure
-openclaw-config/**
-!openclaw-config/.gitkeep
-toolchain/**
-!toolchain/.gitkeep
-tailscale-state/**
-!tailscale-state/.gitkeep
-# workspace is created by setup.sh / Docker; may itself be a git repo
+# runtime dirs: ignored whole — Docker auto-creates bind-mount sources on `compose up`.
+# Whole-dir ignore is robust against nested .git repos (e.g. sync.sh backup) appearing inside.
+openclaw-config/
+toolchain/
+tailscale-state/
 openclaw-workspace/
 openclaw-workspaces/
 openclaw-repos/
