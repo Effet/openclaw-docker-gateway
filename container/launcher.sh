@@ -56,11 +56,14 @@ if [ -n "${PROXY:-}" ]; then
     esac
 
     PROXY_LINE="${SCHEME} ${PHOST} ${PPORT}${PUSER:+ ${PUSER} ${PPASS}}"
+    # localnet ${PHOST} prevents double-wrap: apps honoring HTTP_PROXY already
+    # dial the proxy directly; without this proxychains would re-wrap that dial.
     cat > /tmp/proxychains.conf << CONF
 strict_chain
 proxy_dns
 localnet 127.0.0.0/255.0.0.0
 localnet ::1/128
+localnet ${PHOST}/255.255.255.255
 [ProxyList]
 ${PROXY_LINE}
 CONF

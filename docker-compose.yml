@@ -8,6 +8,9 @@ services:
     command: ["supervisord", "-c", "/supervisord.conf"]
     environment:
       TZ: Asia/Shanghai
+      HTTP_PROXY: ${PROXY:-}
+      HTTPS_PROXY: ${PROXY:-}
+      NO_PROXY: 127.0.0.1,localhost,::1,.local
     env_file:
       - path: .env
         required: false
