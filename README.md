@@ -93,9 +93,7 @@ Tailscale state is persisted in `./tailscale-state/` — the device stays regist
 
 ## Proxy
 
-Node.js's native `fetch` (undici) does not respect `HTTPS_PROXY`. This setup uses **proxychains4** to transparently route openclaw's traffic at the socket level.
-
-Set a single variable in `.env`:
+OpenClaw needs outbound access to Google/Gemini APIs. Set a single variable in `.env`:
 
 ```env
 # HTTP proxy
@@ -108,11 +106,18 @@ PROXY=http://user:pass@192.168.1.1:7890
 PROXY=socks5://192.168.1.1:1080
 ```
 
-`npm install` also benefits — `PROXY` is automatically used during bootstrapping and hot-swap updates.
+**Two-layer coverage.** `PROXY` is propagated two ways:
+
+1. As `HTTP_PROXY` / `HTTPS_PROXY` / `NO_PROXY` env vars — picked up by standard HTTP clients (npm, curl, git, Node `fetch`/undici).
+2. The gateway daemon and the `./openclaw` CLI wrapper run under **proxychains4**, which hooks libc `connect()` as a catch-all for libraries that ignore env vars or use raw TCP.
+
+Most clients are covered by the env vars; proxychains sweeps up the stragglers. `npm install` during bootstrap / hot-swap is also covered.
 
 **Prefer SOCKS5 over HTTP proxy.** HTTP CONNECT proxies are designed for HTTPS (port 443) and often block or mishandle connections to other ports (e.g. SSH on port 22). Some npm packages depend on private git repos cloned over SSH — with an HTTP proxy these installs fail with a misleading `Permission denied (publickey)` error. SOCKS5 tunnels raw TCP regardless of port, so SSH git dependencies work correctly.
 
-**DNS hijacking.** proxychains4 is configured with `proxy_dns`, meaning DNS resolution is also routed through the proxy. This prevents DNS pollution/hijacking (common in China and some corporate networks) from causing silent failures that masquerade as authentication errors.
+**DNS hijacking.** proxychains4 runs with `proxy_dns`, so name resolution is also tunneled. Prevents DNS pollution (common in China and some corporate networks) from causing silent failures that masquerade as auth errors.
+
+**Bypass whitelist.** proxychains is configured with a `localnet` whitelist so loopback (`127.0.0.0/8`, `::1`), link-local (`169.254.0.0/16`, where cloud-metadata endpoints live), and the proxy host itself never enter the proxy chain. This prevents two classes of problems: double-wrapping when an env-aware app dials the proxy directly, and Google SDK's ADC discovery hanging on a metadata probe that got misrouted upstream. The container additionally sets `GCE_METADATA_HOST=metadata.invalid` to short-circuit that probe at the SDK layer.
 
 ## Restore from Backup
 
