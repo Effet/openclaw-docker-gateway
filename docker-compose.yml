@@ -11,6 +11,9 @@ services:
       HTTP_PROXY: ${PROXY:-}
       HTTPS_PROXY: ${PROXY:-}
       NO_PROXY: 127.0.0.1,localhost,::1,.local
+      # Kill Google SDK's ADC metadata probe at the source (we use API key, not GCE identity).
+      GCE_METADATA_HOST: metadata.invalid
+      NO_GCE_CHECK: "true"
     env_file:
       - path: .env
         required: false

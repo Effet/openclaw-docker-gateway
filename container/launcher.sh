@@ -63,6 +63,7 @@ strict_chain
 proxy_dns
 localnet 127.0.0.0/255.0.0.0
 localnet ::1/128
+localnet 169.254.0.0/255.255.0.0
 localnet ${PHOST}/255.255.255.255
 [ProxyList]
 ${PROXY_LINE}
